@@ -1615,11 +1615,11 @@
                                             <div style="font-size: 16px; font-weight: bold;">${results.runnerUp || '-'}</div>
                                             <div style="font-size: 12px; opacity: 0.8;">亚军</div>
                                         </div>
-                                        <div style="order: 3;">
-                                            <div style="font-size: 30px;">🥉</div>
-                                            <div style="font-size: 16px; font-weight: bold;">${results.thirdPlace || '-'}</div>
-                                            <div style="font-size: 12px; opacity: 0.8;">季军</div>
-                                        </div>
+                                            <div style="order: 3;">
+                                                <div style="font-size: 30px;">🥉</div>
+                                                <div style="font-size: 16px; font-weight: bold;">${Array.isArray(results.thirdPlaces) ? results.thirdPlaces.join('、') : results.thirdPlace || '-'}</div>
+                                                <div style="font-size: 12px; opacity: 0.8;">${Array.isArray(results.thirdPlaces) && results.thirdPlaces.length > 1 ? '季军(并列)' : '季军'}</div>
+                                            </div>
                                     </div>
                                 </div>
                             `;
@@ -1652,8 +1652,8 @@
                                         </div>
                                         <div>
                                             <div style="font-size: 30px;">🥉</div>
-                                            <div style="font-size: 16px; font-weight: bold;">${results.thirdPlace || '-'}</div>
-                                            <div style="font-size: 12px; color: #666;">季军</div>
+                                            <div style="font-size: 16px; font-weight: bold;">${Array.isArray(results.thirdPlaces) ? results.thirdPlaces.join('、') : results.thirdPlace || '-'}</div>
+                                            <div style="font-size: 12px; color: #666;">${Array.isArray(results.thirdPlaces) && results.thirdPlaces.length > 1 ? '季军(并列)' : '季军'}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -1713,6 +1713,7 @@
             let champion = null;
             let runnerUp = null;
             let thirdPlace = null;
+            let thirdPlaces = [];
             
             // 计算总分
             let p1Total = finalMatch.player1Total || 0;
@@ -1763,11 +1764,15 @@
                 
                 if (bP1Total > bP2Total) {
                     thirdPlace = bronzeMatch.player1Name;
+                    thirdPlaces = [bronzeMatch.player1Name];
                 } else if (bP2Total > bP1Total) {
                     thirdPlace = bronzeMatch.player2Name;
+                    thirdPlaces = [bronzeMatch.player2Name];
                 }
             } else {
+                // 没有铜牌赛时，使用半决赛输的两队作为季军
                 const semiFinals = completedMatches.filter(m => (m.roundNumber || '').includes('半决') || (m.roundNumber || '').includes('半决赛'));
+                
                 if (semiFinals.length > 0) {
                     for (const semi of semiFinals) {
                         let sP1Total = semi.player1Total || 0;
@@ -1783,22 +1788,33 @@
                             } catch(e) {}
                         }
                         
+                        // 输的一方加入季军列表
                         if (sP1Total > sP2Total) {
-                            thirdPlace = semi.player2Name;
-                            break;
+                            if (!thirdPlaces.includes(semi.player2Name)) {
+                                thirdPlaces.push(semi.player2Name);
+                            }
+                            if (!thirdPlace) thirdPlace = semi.player2Name;
                         } else if (sP2Total > sP1Total) {
-                            thirdPlace = semi.player1Name;
-                            break;
+                            if (!thirdPlaces.includes(semi.player1Name)) {
+                                thirdPlaces.push(semi.player1Name);
+                            }
+                            if (!thirdPlace) thirdPlace = semi.player1Name;
                         }
                     }
                 }
             }
             
             console.log('Third place:', thirdPlace);
-            
+            console.log('Third places (array):', thirdPlaces);
+
             if (!champion) return null;
             
-            return { champion: champion || '-', runnerUp: runnerUp || '-', thirdPlace: thirdPlace || '-' };
+            return { 
+                champion: champion || '-', 
+                runnerUp: runnerUp || '-', 
+                thirdPlace: thirdPlace || '-',
+                thirdPlaces: thirdPlaces.length > 0 ? thirdPlaces : null
+            };
         }
         
         function getRoundOrder(roundNumber) {
