@@ -2012,7 +2012,6 @@
                                                 <div style="font-size: 30px;">🥉</div>
                                                 <div style="font-size: 16px; font-weight: bold;">${Array.isArray(results.thirdPlaces) ? results.thirdPlaces.join('、') : results.thirdPlace || '-'}</div>
                                                 <div style="font-size: 12px; opacity: 0.8;">${Array.isArray(results.thirdPlaces) && results.thirdPlaces.length > 1 ? '季军(并列)' : '季军'}</div>
-                                                <div style="font-size: 10px; color: yellow; margin-top: 5px;">[DEBUG] 半决赛: ${results._debug?.semiFinalsCount || 0}</div>
                                             </div>
                                     </div>
                                 </div>
@@ -2145,7 +2144,7 @@
             completedMatches.forEach(m => {
                 console.log(`Match ${m.id}: roundNumber="${m.roundNumber}", p1=${m.player1Name}, p2=${m.player2Name}`);
             });
-            
+
             const semiFinals = completedMatches.filter(m => {
                 const r = m.roundNumber || '';
                 const isSemi = r.includes('半') || r.toLowerCase().includes('semi') || r.includes('准决') || r.includes('4强') || r.includes('半决赛') || r.includes('初赛');
@@ -2155,7 +2154,7 @@
 
             console.log('===== Semi-finals found:', semiFinals.length);
             semiFinals.forEach((semi, i) => {
-                console.log(`Semi ${i+1}:`, { p1: semi.player1Name, p2: semi.player2Name, scores: semi.scores });
+                console.log(`Semi ${i + 1}:`, { p1: semi.player1Name, p2: semi.player2Name, scores: semi.scores });
             });
 
             console.log('===== Processing semi-finals for third places =====');
@@ -2206,7 +2205,7 @@
 
                     console.log('Semi match:', semi.player1Name, sP1Total, 'vs', semi.player2Name, sP2Total);
                     console.log('Winner is:', sP1Total > sP2Total ? semi.player1Name : (sP2Total > sP1Total ? semi.player2Name : 'tie'));
-                    
+
                     console.log('===== DEBUG: Adding third place =====');
                     console.log('Condition 1 (player1 wins): sP1Total=' + sP1Total + ', sP2Total=' + sP2Total + ', result=' + (sP1Total > sP2Total && sP1Total > 0));
                     console.log('Condition 2 (player2 wins): sP2Total=' + sP2Total + ', sP1Total=' + sP1Total + ', result=' + (sP2Total > sP1Total && sP2Total > 0));
