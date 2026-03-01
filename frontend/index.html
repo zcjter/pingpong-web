@@ -9,6 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>乒乓球比赛管理系统</title>
     <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <script src="https://unpkg.com/marked/marked.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -321,6 +322,18 @@
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
         }
 
+        .player-card-actions {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-sm {
+            padding: 4px 10px;
+            font-size: 12px;
+        }
+
         .player-avatar {
             width: 80px;
             height: 80px;
@@ -357,6 +370,40 @@
             line-height: 100px;
             font-size: 48px;
             margin-right: 20px;
+        }
+
+        #detail-intro {
+            margin-top: 10px;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        #detail-intro h1, #detail-intro h2, #detail-intro h3 {
+            margin: 10px 0 5px;
+            color: #1a73e8;
+        }
+
+        #detail-intro p {
+            margin: 8px 0;
+        }
+
+        #detail-intro ul, #detail-intro ol {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        #detail-intro code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+
+        #detail-intro blockquote {
+            border-left: 3px solid #1a73e8;
+            padding-left: 10px;
+            margin: 10px 0;
+            color: #666;
         }
 
         .player-stats {
@@ -1065,10 +1112,14 @@
 
         function renderPlayersList(players) {
             const html = players.map(p => `
-                <div class="player-card" onclick="showPlayerDetail(${p.id})">
+                <div class="player-card" ondblclick="showPlayerDetail(${p.id})">
                     <div class="player-avatar">${p.name.charAt(0)}</div>
                     <div class="player-name">${p.name}</div>
                     <div class="player-country">${p.country || '-'}</div>
+                    <div class="player-card-actions" onclick="event.stopPropagation()">
+                        <button class="btn btn-sm btn-warning" onclick="editPlayer(${p.id})">编辑</button>
+                        <button class="btn btn-sm btn-danger" onclick="deletePlayer(${p.id})">删除</button>
+                    </div>
                 </div>
             `).join('');
             document.getElementById('players-grid').innerHTML = html || '<div class="empty-state">暂无运动员</div>';
@@ -1083,7 +1134,58 @@
                 document.getElementById('detail-avatar').textContent = p.name.charAt(0);
                 document.getElementById('detail-name').textContent = p.name;
                 document.getElementById('detail-country').textContent = p.country || '-';
-                document.getElementById('detail-intro').textContent = p.introduction || '暂无简介';
+                let introHtml = p.introduction || '暂无简介';
+                
+                function parseMarkdown(text) {
+                    if (!text) return text;
+                    let html = text;
+                    html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+                    html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+                    html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+                    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+                    html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+                    html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+                    html = html.replace(/_([^_]+)_/g, '<em>$1</em>');
+                    html = html.replace(/^[-*] (.+)$/gm, '<li>$1</li>');
+                    html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+                    html = html.replace(/^---$/gm, '<hr>');
+                    
+                    const tableRegex = /(\|.+\|\n)+/g;
+                    html = html.replace(tableRegex, (match) => {
+                        const rows = match.trim().split('\n').filter(row => !row.match(/^\|[\s\-:|]+\|$/));
+                        if (rows.length === 0) return match;
+                        let tableHtml = '<table>';
+                        rows.forEach((row, idx) => {
+                            const cells = row.split('|').filter(c => c.trim());
+                            if (cells.length > 0) {
+                                const tag = idx === 0 ? 'th' : 'td';
+                                const cellsHtml = cells.map(c => `<${tag}>${c.trim()}</${tag}>`).join('');
+                                tableHtml += `<tr>${cellsHtml}</tr>`;
+                            }
+                        });
+                        tableHtml += '</table>';
+                        return tableHtml;
+                    });
+                    
+                    html = html.replace(/\n\n/g, '</p><p>');
+                    html = '<p>' + html + '</p>';
+                    html = html.replace(/<p><\/p>/g, '');
+                    return html;
+                }
+                
+                try {
+                    const m = window.marked;
+                    if (m && typeof m.parse === 'function') {
+                        const parsed = m.parse(introHtml);
+                        introHtml = parsed instanceof Promise ? await parsed : parsed;
+                    } else {
+                        introHtml = parseMarkdown(introHtml);
+                    }
+                } catch (e) {
+                    introHtml = parseMarkdown(introHtml);
+                }
+                document.getElementById('detail-intro').innerHTML = introHtml;
                 document.getElementById('detail-age').textContent = p.age || '-';
                 document.getElementById('detail-gender').textContent = p.gender || '-';
                 document.getElementById('detail-points').textContent = p.rankingPoints || 0;
