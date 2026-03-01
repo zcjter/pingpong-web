@@ -1015,7 +1015,7 @@
                     <div class="announcement-item" onclick="showAnnouncementDetail(${a.id})">
                         <div class="announcement-title">${a.title}</div>
                         <div>${a.content.substring(0, 100)}${a.content.length > 100 ? '...' : ''}</div>
-                        <div class="announcement-date">${new Date(a.createdAt).toLocaleDateString()}</div>
+                        <div class="announcement-date">${a.updatedAt ? new Date(a.updatedAt).toLocaleDateString() : (a.createdAt ? new Date(a.createdAt).toLocaleDateString() : '-')}</div>
                     </div>
                 `).join('') : '<div class="empty-state">暂无公告</div>';
                 document.getElementById('announcements-list').innerHTML = annHtml;
@@ -1091,7 +1091,7 @@
                 const ann = await res.json();
                 document.getElementById('ann-title').textContent = ann.title;
                 document.getElementById('ann-type').textContent = ann.type === 'news' ? '新闻' : ann.type === 'notice' ? '通知' : '系统';
-                document.getElementById('ann-date').textContent = new Date(ann.createdAt).toLocaleString();
+                document.getElementById('ann-date').textContent = ann.updatedAt ? new Date(ann.updatedAt).toLocaleString() : (ann.createdAt ? new Date(ann.createdAt).toLocaleString() : '-');
                 document.getElementById('ann-content').textContent = ann.content;
                 showPage('announcement');
             } catch (e) {

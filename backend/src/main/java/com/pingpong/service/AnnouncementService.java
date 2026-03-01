@@ -28,6 +28,12 @@ public class AnnouncementService {
 
     @Transactional
     public Announcement save(Announcement announcement) {
+        if (announcement.getId() != null) {
+            Optional<Announcement> existing = announcementRepository.findById(announcement.getId());
+            if (existing.isPresent()) {
+                announcement.setCreatedAt(existing.get().getCreatedAt());
+            }
+        }
         return announcementRepository.save(announcement);
     }
 
